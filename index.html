@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>园梦</title>
+  <style>
+    :root{
+      --panel: rgba(255, 247, 237, 0.9);
+      --primary: #f97316;
+      --border:#ffe0bd;
+      --muted:#a37b62;
+      --text:#5c3b25;
+    }
+    html,body{margin:0;height:100%;background:#fff7ed;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Helvetica Neue",Arial,"Noto Sans CJK SC","Microsoft YaHei",sans-serif}
+    .app{min-height:100dvh;display:flex;flex-direction:column;overscroll-behavior-y:contain}
+    .app-header{position:sticky;top:0;z-index:10;background:var(--panel);border-bottom:2px solid var(--border);padding:calc(12px + env(safe-area-inset-top,0)) 14px 12px 14px}
+    .app-title{font-weight:700;font-size:15px;letter-spacing:.5px}
+    .typing-hint{margin-top:6px;color:var(--muted);font-size:11px;display:flex;align-items:center;gap:6px}
+    .hidden{display:none!important}
+    .dots{display:inline-flex;gap:4px}
+    .dots i{width:6px;height:6px;border-radius:50%;background:#e8a66c;display:inline-block;animation:blink 1.2s infinite ease-in-out}
+    .dots i:nth-child(2){animation-delay:.2s}
+    .dots i:nth-child(3){animation-delay:.4s}
+    @keyframes blink{0%,80%,100%{opacity:.3;transform:translateY(0)}40%{opacity:1;transform:translateY(-2px)}}
+    .chat{flex:1;overflow:auto;padding:16px 14px calc(96px + env(safe-area-inset-bottom,0))}
+    .msg{display:flex;margin:8px 0}
+    .msg.user{justify-content:flex-end}
+    .msg.bot{justify-content:flex-start}
+    .avatar{width:24px;height:24px;border-radius:8px;background:#fff7ec;border:1px solid var(--border);margin-right:8px;overflow:hidden}
+    .avatar img{width:100%;height:100%;object-fit:cover;display:block;border-radius:8px}
+    .bubble{max-width:92%;padding:8px 10px;border:1px solid var(--border);border-radius:16px;box-shadow:0 8px 16px rgba(149,90,35,.1);font-size:14px;background:linear-gradient(180deg,#fffaf3 0%,#fff4e5 100%)}
+    .msg.user .bubble{background:linear-gradient(180deg,#ffe3bf 0%,#ffd7a8 100%);border-color:#ffdeb2}
+    .meta{margin-top:4px;font-size:10px;color:var(--muted)}
+    .meta.right{text-align:right}.meta.left{text-align:left}
+    .attachments{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+    .attachments img{max-height:96px;border-radius:12px;border:1px solid var(--border)}
+    .composer{position:fixed;left:0;right:0;bottom:0;background:var(--panel);border-top:2px solid var(--border);padding:10px 12px calc(10px + env(safe-area-inset-bottom,0));display:flex;flex-direction:column;gap:6px}
+    .row{display:flex;align-items:center;gap:6px}
+    .icon-btn{min-width:28px;height:28px;padding:0 8px;border-radius:10px;border:1px solid var(--border);background:linear-gradient(180deg,#fff7ec 0%,#ffe9d3 100%);color:var(--text);cursor:pointer}
+    .file-count{background:#111827;color:#fff;border-radius:999px;min-width:18px;height:18px;padding:0 6px;font-size:11px;display:inline-flex;align-items:center;justify-content:center}
+    .message-input{flex:1;height:36px;font-size:16px;border:1px solid var(--border);border-radius:14px;padding:0 12px;background:#fff}
+    .send-btn{height:36px;padding:0 14px;border:none;border-radius:14px;background:var(--primary);color:#fff;cursor:pointer}
+    .preview{display:flex;gap:8px;flex-wrap:wrap}
+    .thumb{width:64px;height:64px;border-radius:12px;border:1px solid var(--border);overflow:hidden;position:relative;background:#fff}
+    .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+    .remove{position:absolute;right:4px;top:4px;width:20px;height:20px;border-radius:999px;border:1px solid rgba(0,0,0,.06);background:rgba(255,255,255,.9);display:flex;align-items:center;justify-content:center;cursor:pointer}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <div class="app-title">园梦</div>
+      <div id="typingHint" class="typing-hint hidden">
+        <span class="dots"><i></i><i></i><i></i></span><span>园梦正在输入…</span>
+      </div>
+    </header>
+    <main id="chat" class="chat"></main>
+    <footer class="composer">
+      <div class="row">
+        <input type="file" id="fileInput" accept="image/*" multiple hidden>
+        <label for="fileInput" class="icon-btn">+</label>
+        <span id="fileCount" class="file-count hidden">0</span>
+        <input id="messageInput" class="message-input" type="text" placeholder="发送消息… 回车发送">
+        <button id="sendBtn" class="send-btn">发送</button>
+      </div>
+      <div id="attachmentsPreview" class="preview"></div>
+    </footer>
+  </div>
+  <script>
+    const els = {
+      chat: document.getElementById('chat'),
+      input: document.getElementById('messageInput'),
+      send: document.getElementById('sendBtn'),
+      file: document.getElementById('fileInput'),
+      fileCount: document.getElementById('fileCount'),
+      preview: document.getElementById('attachmentsPreview'),
+      typingHint: document.getElementById('typingHint')
+    };
+    const storeKey = { history:'ym_mp_h5_history', uid:'ym_mp_h5_uid' };
+    const config = { apiBase:'https://api.dify.ai/v1', apiKey:'app-McqPV9fDwJqWpJamnIh8iCVL' };
+    let state = { conversationId:null, history:[], typingCount:0 };
+    const getUid=()=>{ let id=localStorage.getItem(storeKey.uid); if(!id){ id='u_'+Math.random().toString(36).slice(2); localStorage.setItem(storeKey.uid,id);} return id; };
+    const formatTime=(ts)=>{ const d=new Date(ts||Date.now()); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); };
+    const save=()=>localStorage.setItem(storeKey.history, JSON.stringify({conversationId:state.conversationId, history:state.history}));
+    const load=()=>{ try{ const s=JSON.parse(localStorage.getItem(storeKey.history)||'{}'); if(s.conversationId) state.conversationId=s.conversationId; if(Array.isArray(s.history)) state.history=s.history; }catch{} };
+    const scroll=()=>requestAnimationFrame(()=>{ els.chat.scrollTop=els.chat.scrollHeight; });
+    const renderAttachments=(atts)=>{ const box=document.createElement('div'); box.className='attachments'; atts.forEach(a=>{ const img=document.createElement('img'); img.src=a.url||''; box.appendChild(img); }); return box; };
+    const renderMsg=(m)=>{ const w=document.createElement('div'); w.className='msg '+(m.role==='user'?'user':'bot'); if(m.segments){ m.segments.forEach(seg=>{ const b=document.createElement('div'); b.className='bubble'; b.innerText=seg.content||''; w.appendChild(b); }); } else { const b=document.createElement('div'); b.className='bubble'; b.innerText=typeof m.content==='string'?m.content:JSON.stringify(m.content); if(m.attachments?.length) b.appendChild(renderAttachments(m.attachments)); w.appendChild(b); } const meta=document.createElement('div'); meta.className='meta '+(m.role==='user'?'right':'left'); meta.innerText=m.time||formatTime(); w.appendChild(meta); els.chat.appendChild(w); };
+    const renderAll=()=>{ els.chat.innerHTML=''; state.history.forEach(renderMsg); scroll(); };
+    const showTyping=()=>{ state.typingCount++; els.typingHint.classList.remove('hidden'); };
+    const hideTyping=()=>{ state.typingCount=Math.max(0,state.typingCount-1); if(state.typingCount===0) els.typingHint.classList.add('hidden'); };
+    const fileToBase64=(f)=>new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(f); });
+    const sendToDify=async ({text, attachments})=>{
+      const body={ inputs:{}, query:text||'', response_mode:'blocking', user:getUid() };
+      if(state.conversationId) body.conversation_id=state.conversationId;
+      // 不上传 dataURL
+      const resp=await fetch(config.apiBase.replace(/\/+$/,'')+'/chat-messages',{ method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+config.apiKey}, body:JSON.stringify(body)});
+      if(!resp.ok){ throw new Error(resp.status+' '+await resp.text()); }
+      return resp.json();
+    };
+    const parseAssistant=(ans)=>{
+      const raw=ans?.answer||ans?.message||ans?.output||''; const text=typeof raw==='string'?raw:JSON.stringify(raw||'');
+      const tryParse=(s)=>{ try{ const o=JSON.parse(s); if(Array.isArray(o.dialogue_segments)) return o; }catch{} return null; };
+      let o=tryParse(text); if(o) return o;
+      const f=text.match(/```json([\s\S]*?)```/i)||text.match(/```([\s\S]*?)```/); if(f&&f[1]){ o=tryParse(f[1].trim()); if(o) return o; }
+      const i=text.indexOf('{'); if(i>=0){ let d=0; for(let j=i;j<text.length;j++){ const c=text[j]; if(c==='{') d++; else if(c==='}'){ d--; if(d===0){ o=tryParse(text.slice(i,j+1)); if(o) return o; break; } } } }
+      return { dialogue_segments:[{content:text, delay:0}] };
+    };
+    const renderSegments=async (segments)=>{
+      for(let i=0;i<segments.length;i++){ const seg=segments[i]; const delayMs=Math.max(0,Math.min(10,Number(seg.delay||0)))*1000; if(delayMs>0){ showTyping(); await new Promise(r=>setTimeout(r,delayMs)); hideTyping(); }
+        const part={ role:'assistant', segments:[{content:seg.content||''}], time:formatTime(Date.now()) };
+        state.history.push(part); renderMsg(part); save(); scroll(); if(i<segments.length-1) showTyping();
+      }
+      hideTyping();
+    };
+    const updatePreview=async ()=>{
+      const list=[...(els.file.files||[])]; if(list.length>0){ els.fileCount.classList.remove('hidden'); els.fileCount.innerText=String(list.length); } else { els.fileCount.classList.add('hidden'); }
+      els.preview.innerHTML=''; for(let i=0;i<list.length;i++){ const f=list[i]; const url=await fileToBase64(f); const th=document.createElement('div'); th.className='thumb'; th.innerHTML='<img src="'+url+'"><div class="remove">×</div>'; th.querySelector('.remove').addEventListener('click', ()=>{ const dt=new DataTransfer(); for(let k=0;k<els.file.files.length;k++){ if(k!==i) dt.items.add(els.file.files[k]); } els.file.files=dt.files; updatePreview(); }); els.preview.appendChild(th); }
+    };
+    const send=async ()=>{
+      const text=els.input.value.trim(); const files=els.file.files; if(!text && (!files||!files.length)) return;
+      const atts=[]; if(files&&files.length){ for(const f of files){ const b64=await fileToBase64(f); atts.push({url:b64}); } }
+      const me={ role:'user', content:text, attachments:atts, time:formatTime(Date.now()) }; state.history.push(me); renderMsg(me); save(); els.input.value=''; els.file.value=''; updatePreview(); scroll();
+      try{ showTyping(); const res=await sendToDify({text}); if(res?.conversation_id) state.conversationId=res.conversation_id; const parsed=parseAssistant(res); await renderSegments(parsed.dialogue_segments||[]); save(); }catch(e){ hideTyping(); const err={ role:'system', content:'请求失败：'+(e.message||e), time:formatTime(Date.now()) }; state.history.push(err); renderMsg(err); save(); }
+    };
+    els.send.addEventListener('click', send);
+    els.input.addEventListener('keydown', (e)=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); send(); } });
+    els.file.addEventListener('change', updatePreview);
+    // init
+    load(); if(state.history.length===0){ state.history.push({role:'system', content:'开始和「园梦」聊天吧～', time:formatTime(Date.now())}); save(); }
+    state.history.forEach(renderMsg); scroll();
+  </script>
+</body>
+</html>
+
+
