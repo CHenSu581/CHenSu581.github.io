@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全网获客雷达 Ultimate 📡</title>
+    <style>
+        :root {
+            --primary-color: #007AFF;
+            --danger-color: #FF3B30;
+            --text-main: #1D1D1F;
+            --text-secondary: #86868B;
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.8);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background-attachment: fixed;
+            margin: 0;
+            padding: 40px 20px;
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 50% 50%, rgba(0, 122, 255, 0.1), transparent 60%), radial-gradient(circle at 80% 20%, rgba(255, 59, 48, 0.1), transparent 50%);
+            z-index: -1;
+            animation: bgMove 20s ease-in-out infinite alternate;
+        }
+
+        @keyframes bgMove {
+            0% {
+                transform: translate(0, 0);
+            }
+
+            100% {
+                transform: translate(-5%, -5%);
+            }
+        }
+
+        .container {
+            max-width: 860px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 32px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            color: #1d1d1f;
+        }
+
+        .badge {
+            font-size: 13px;
+            background: linear-gradient(135deg, #333, #555);
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: var(--glass-shadow);
+        }
+
+        .control-panel {
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--text-main);
+        }
+
+        .form-row {
+            display: flex;
+            gap: 20px;
+        }
+
+        .form-col {
+            flex: 1;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 14px;
+            font-size: 16px;
+            outline: none;
+            box-sizing: border-box;
+            transition: all 0.2s ease;
+        }
+
+        input:focus,
+        select:focus {
+            background: #fff;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.15);
+        }
+
+        .hint {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 6px;
+        }
+
+        .segmented-control {
+            display: flex;
+            background: rgba(118, 118, 128, 0.12);
+            padding: 4px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+
+        .segmented-control input[type="radio"] {
+            display: none;
+        }
+
+        .segmented-control label {
+            flex: 1;
+            text-align: center;
+            padding: 10px 0;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 9px;
+            transition: all 0.2s ease;
+            margin: 0;
+        }
+
+        .segmented-control input[type="radio"]:checked+label {
+            background: #fff;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            font-weight: 600;
+        }
+
+        .custom-days-wrapper {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        button#btn {
+            width: 100%;
+            background: linear-gradient(135deg, #007AFF, #0056b3);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 16px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+        }
+
+        button#btn:hover {
+            transform: scale(1.01);
+        }
+
+        button#btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .query-preview {
+            background: rgba(255, 255, 255, 0.4);
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            margin-bottom: 24px;
+            border: 1px dashed rgba(0, 0, 0, 0.1);
+            display: flex;
+            gap: 8px;
+        }
+
+        .result-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .lead-card {
+            padding: 24px;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .lead-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 6px;
+            background: var(--primary-color);
+        }
+
+        .lead-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .lead-title {
+            font-size: 19px;
+            font-weight: 700;
+            color: var(--text-main);
+            text-decoration: none;
+            display: block;
+            margin-bottom: 12px;
+        }
+
+        .lead-title:hover {
+            color: var(--primary-color);
+        }
+
+        .tags-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .tag {
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .time-tag {
+            background: rgba(0, 122, 255, 0.1);
+            color: var(--primary-color);
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .lead-body {
+            font-size: 15px;
+            color: #444;
+            line-height: 1.6;
+            background: rgba(255, 255, 255, 0.5);
+            padding: 14px;
+            border-radius: 12px;
+            margin-bottom: 14px;
+        }
+
+        .lead-footer {
+            padding-top: 14px;
+            border-top: 1px solid rgba(0, 0, 0, 0.06);
+            font-size: 14px;
+            color: var(--danger-color);
+            font-weight: 600;
+        }
+
+        #status {
+            text-align: center;
+            margin: 20px 0;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .spin {
+            display: inline-block;
+            animation: spin 1s linear infinite;
+        }
+
+        .error-panel {
+            background: linear-gradient(135deg, rgba(255, 59, 48, 0.1), rgba(255, 149, 0, 0.1));
+            border: 2px solid rgba(255, 59, 48, 0.3);
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .error-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .error-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--danger-color);
+            margin-bottom: 8px;
+        }
+
+        input.invalid {
+            border-color: var(--danger-color) !important;
+            box-shadow: 0 0 0 4px rgba(255, 59, 48, 0.15) !important;
+        }
+
+        @media screen and (max-width: 768px) {
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📡 全网获客雷达 <span class="badge">Ultimate</span></h1>
+        </div>
+
+        <div class="control-panel glass-panel">
+            <div class="form-group">
+                <label>🔍 核心业务关键词</label>
+                <input type="text" id="coreKeyword" value="" oninput="updatePreview()"
+                    placeholder="例如: 装修设计 / 律师咨询 / 二手车 / 健身教练">
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    <label>🎯 锁定目标平台</label>
+                    <select id="targetPlatform" onchange="updatePreview()">
+                        <option value="all">🌐 全网搜索</option>
+                        <option value="xiaohongshu">📕 小红书</option>
+                        <option value="bilibili">📺 Bilibili</option>
+                        <option value="douyin">🎵 抖音</option>
+                        <option value="zhihu">❓ 知乎</option>
+                    </select>
+                </div>
+                <div class="form-col">
+                    <label>⚙️ 底层搜索引擎</label>
+                    <select id="searchEngine">
+                        <option value="google" selected>谷歌 (Google)</option>
+                        <option value="baidu">百度 (Baidu)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row" style="margin-top: 24px;">
+                <div class="form-col">
+                    <label>🎯 意向特征 (空格分隔)</label>
+                    <input type="text" id="intentKeywords" value="" oninput="updatePreview()"
+                        placeholder="例如: 价格 费用 求推荐 怎么选">
+                    <div class="hint">包含任一词即命中 (表示购买意向的词)</div>
+                </div>
+                <div class="form-col">
+                    <label>🚫 排除干扰 (空格分隔)</label>
+                    <input type="text" id="negativeKeywords" value="招聘 招人 求职 岗位" oninput="updatePreview()"
+                        placeholder="例如: 招聘 广告 免费">
+                    <div class="hint">包含任一词即过滤 (排除卖方/招聘信息)</div>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 24px;">
+                <label>⏰ 发布时间范围</label>
+                <div class="segmented-control">
+                    <input type="radio" name="timeRange" id="time1" value="1" onchange="handleTimeChange(this)">
+                    <label for="time1">24小时</label>
+                    <input type="radio" name="timeRange" id="time3" value="3" onchange="handleTimeChange(this)">
+                    <label for="time3">3天</label>
+                    <input type="radio" name="timeRange" id="time7" value="7" checked onchange="handleTimeChange(this)">
+                    <label for="time7">7天</label>
+                    <input type="radio" name="timeRange" id="time30" value="30" onchange="handleTimeChange(this)">
+                    <label for="time30">30天</label>
+                    <input type="radio" name="timeRange" id="timeCustom" value="custom"
+                        onchange="handleTimeChange(this)">
+                    <label for="timeCustom">自定义</label>
+                </div>
+                <div class="custom-days-wrapper" id="customDaysWrapper">
+                    <span>过去</span>
+                    <input type="number" id="customDaysInput" value="15" min="1" max="365"
+                        style="width: 80px; text-align: center;" oninput="validateAndUpdate()">
+                    <span>天</span>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 24px;">
+                <div class="form-col">
+                    <label>📊 抓取数量 (影响速度)</label>
+                    <select id="resultLimit">
+                        <option value="10">⚡ 10 条 (极速)</option>
+                        <option value="20">🚀 20 条 (推荐)</option>
+                        <option value="50">☕ 50 条 (稍慢)</option>
+                        <option value="100">🐢 100 条 (慎用)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="query-preview">
+                <span>🤖</span>
+                <div>
+                    <strong>AI 指令预览:</strong>
+                    <span id="previewText"></span>
+                </div>
+            </div>
+
+            <button onclick="startRadar()" id="btn">🚀 启动全网扫描</button>
+        </div>
+
+        <div id="status">系统就绪,请配置参数后启动...</div>
+        <div id="results" class="result-list"></div>
+    </div>
+
+    <script>
+        const N8N_API_URL = 'http://192.168.1.250:5678/webhook/search-leads';
+
+        function handleTimeChange(radio) {
+            const wrapper = document.getElementById('customDaysWrapper');
+            wrapper.style.display = radio.value === 'custom' ? 'flex' : 'none';
+            if (radio.value === 'custom') document.getElementById('customDaysInput').focus();
+            updatePreview();
+        }
+
+        function validateAndUpdate() {
+            const input = document.getElementById('customDaysInput');
+            let value = parseInt(input.value);
+            if (isNaN(value) || value < 1) value = 1;
+            if (value > 365) value = 365;
+            input.value = value;
+            updatePreview();
+        }
+
+        function getSelectedDays() {
+            const radios = document.getElementsByName('timeRange');
+            for (const radio of radios) {
+                if (radio.checked) {
+                    if (radio.value === 'custom') {
+                        return parseInt(document.getElementById('customDaysInput').value) || 7;
+                    }
+                    return parseInt(radio.value);
+                }
+            }
+            return 7;
+        }
+
+        function generateQuery() {
+            const core = document.getElementById('coreKeyword').value.trim();
+            const intents = document.getElementById('intentKeywords').value.trim();
+            const negatives = document.getElementById('negativeKeywords').value.trim();
+            const platform = document.getElementById('targetPlatform').value;
+
+            if (!core) return "";
+
+            let query = core;
+
+            const siteMap = {
+                'xiaohongshu': 'site:xiaohongshu.com',
+                'bilibili': 'site:bilibili.com',
+                'douyin': 'site:douyin.com',
+                'zhihu': 'site:zhihu.com'
+            };
+
+            if (siteMap[platform]) query += ` ${siteMap[platform]}`;
+            if (intents) {
+                const intentList = intents.split(/\s+/).map(w => `"${w}"`).join(" | ");
+                query += ` (${intentList})`;
+            }
+            if (negatives) {
+                const negList = negatives.split(/\s+/).map(w => `-${w}`).join(" ");
+                query += ` ${negList}`;
+            }
+
+            return query;
+        }
+
+        function updatePreview() {
+            const query = generateQuery();
+            const days = getSelectedDays();
+            const engine = document.getElementById('searchEngine').value;
+            const previewHtml = query
+                ? `${query} <span style="color:var(--primary-color); margin-left:8px; font-weight:600;">[${engine.toUpperCase()} / ${days}天]</span>`
+                : "请输入核心关键词...";
+            document.getElementById('previewText').innerHTML = previewHtml;
+        }
+
+        updatePreview();
+
+        async function startRadar() {
+            const coreInput = document.getElementById('coreKeyword');
+            const query = generateQuery();
+            const days = getSelectedDays();
+            const btn = document.getElementById('btn');
+            const status = document.getElementById('status');
+            const resultBox = document.getElementById('results');
+
+            if (!query) {
+                coreInput.classList.add('invalid');
+                alert("请输入核心关键词!");
+                coreInput.focus();
+                return;
+            }
+            coreInput.classList.remove('invalid');
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spin">⏳</span> 正在全网扫描中...';
+
+            try {
+                // 1. 获取界面参数
+                const engine = document.getElementById('searchEngine').value;
+                const limitSelect = document.getElementById('resultLimit');
+                const limit = limitSelect ? limitSelect.value : 10;
+
+                status.innerHTML = `正在调用 <b>${engine.toUpperCase()}</b> 执行指令:<br><b>${query}</b>`;
+                resultBox.innerHTML = "";
+
+                // 2. 发送请求
+                const requestBody = {
+                    keyword: query,
+                    days: days,
+                    engine: engine,
+                    limit: parseInt(limit)
+                };
+                console.log('🚀 发送请求:', requestBody);
+
+                const response = await fetch(N8N_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const json = await response.json();
+                console.log('📦 n8n 原始响应:', json);
+
+                let leads = [];
+                if (json.code === 200 && json.data && Array.isArray(json.data)) {
+                    leads = json.data;
+                    console.log(`✅ 成功解析 n8n 数据: ${json.total} 条`);
+                } else if (Array.isArray(json)) {
+                    leads = json;
+                } else if (json.data && Array.isArray(json.data)) {
+                    leads = json.data;
+                }
+
+                console.log(`📊 解析后的数据总数: ${leads.length} 条`);
+                console.log('📋 数据详情:', leads);
+
+                const highIntentLeads = leads.filter(lead => {
+                    const level = lead.intent_level || lead.is_lead;
+                    return level === 'High' || level === 'Medium' || level === 'YES';
+                });
+
+                console.log(`🎯 有效线索数: ${highIntentLeads.length} 条 (High/Medium)`);
+                console.log(`🗑️ 已过滤: ${leads.length - highIntentLeads.length} 条 (Low)`);
+
+                if (highIntentLeads.length === 0) {
+                    resultBox.innerHTML = `
+                        <div class="glass-panel" style="text-align:center; padding:40px; color:var(--text-secondary);">
+                            <div style="font-size:40px; margin-bottom:10px;">😕</div>
+                            <div>本次未发现高意向线索</div>
+                            <div style="font-size:12px; margin-top:5px;">AI 已从 ${leads.length} 条结果中过滤掉全部低质量内容(Low)</div>
+                        </div>`;
+                    status.innerText = "✅ 扫描完成 (无高意向结果)";
+                } else {
+                    status.innerText = `✅ 扫描完成!从 ${leads.length} 条中发现 ${highIntentLeads.length} 条有效线索`;
+
+                    highIntentLeads.forEach(lead => {
+                        const safeTitle = lead.title || '无标题信息';
+                        const safeSnippet = lead.snippet || '暂无摘要';
+                        const safePain = lead.pain_point || '无';
+
+                        let tagHtml = '';
+                        const level = lead.intent_level || lead.is_lead;
+                        if (level === 'High' || level === 'YES') {
+                            tagHtml = '<span class="tag" style="background:#ffecec; color:#ff2442;">🔥 高意向</span>';
+                        } else if (level === 'Medium') {
+                            tagHtml = '<span class="tag" style="background:#e3f2fd; color:#1976d2;">🤔 潜在</span>';
+                        }
+
+                        const card = `
+                            <div class="lead-card glass-panel">
+                                <a href="${lead.link}" target="_blank" rel="noopener noreferrer" class="lead-title">${safeTitle}</a>
+                                <div class="tags-row">
+                                    ${tagHtml}
+                                    <span class="time-tag">${days}天内发布</span>
+                                </div>
+                                <div class="lead-body">${safeSnippet}</div>
+                                <div class="lead-footer">🎯 AI 洞察:${safePain}</div>
+                            </div>
+                        `;
+                        resultBox.innerHTML += card;
+                    });
+                }
+
+            } catch (error) {
+                console.error('扫描错误:', error);
+                status.innerHTML = `<span style="color:var(--danger-color)">❌ 扫描失败</span>`;
+                resultBox.innerHTML = `
+                    <div class="error-panel">
+                        <div class="error-icon">⚠️</div>
+                        <div class="error-title">连接错误</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">
+                            ${error.message}<br>
+                            <small>请检查 n8n 服务是否正常运行 (${N8N_API_URL})</small>
+                        </div>
+                    </div>
+                `;
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "🚀 启动全网扫描";
+            }
+        }
+    </script>
+</body>
+
+</html>
